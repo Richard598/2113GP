@@ -557,3 +557,133 @@ void TetrisGame::draw() {
     
     cout.flush();
 }
+//Main game loop
+void TetrisGame::run() {
+    initTerminal(origTermios);
+    showStartScreen();  // Show startup screen first
+    
+    //Input and output file stream
+    ifstream fin;
+    ofstream fout;
+
+    // Select difficulty
+    difficulty = selectDifficulty();
+    
+    // Set drop speed based on difficulty
+    switch(difficulty) {
+        case EASY:
+            dropInterval = 600;  // Slower
+            break;
+        case MEDIUM:
+            dropInterval = 500;  // Default speed
+            break;
+        case HARD:
+            dropInterval = 400;  // Faster
+            break;
+        case EXPERT:
+            dropInterval = 300;  // Very fast
+            break;
+    }
+    
+    spawnPiece(); // Generate first piece
+    chrono::steady_clock::time_point lastDropTime = chrono::steady_clock::now();
+
+    // Main game loop: continue until gameOver is true
+    while (!gameOver) {
+        // Check if drawing clear animation
+        if (!isClearingAnimation) {
+            // Handle user input (non-blocking)
+            char ch;
+            ssize_t n = read(STDIN_FILENO, &ch, 1);
+            if (n == 1) {
+                // If a character was read
+                if (ch == '\033') {
+                    // Might be arrow key start (ESC)
+                    char seq[2];
+                    if (read(STDIN_FILENO, &seq[0], 1) == 1 && read(STDIN_FILENO, &seq[1], 1) == 1) {
+                        // seq[0] should be '[', seq[1] is direction code
+                        if (seq[0] == '[') {
+                            switch(seq[1]) {
+                                case 'A': // ↑
+                                    rotatePiece();
+                                    break;
+                                case 'B': // ↓
+                                    // Try to move down one cell
+                                    if (!movePiece(1, 0)) {
+                                        // If can't move down, lock and spawn new piece
+                                        lockCurrentAndSpawn();
+                                    }
+                                    break;
+                                case 'C': // →
+                                    movePiece(0, 1);
+                                    break;
+                                case 'D': // ←
+                                    movePiece(0, -1);
+                                    break;
+                            }
+                        }
+                    }
+                } else {
+                    // Handle single character controls
+                    char input = ch;
+                    if (input >= 'a' && input <= 'z') {
+                        // Convert lowercase to uppercase for unified handling
+                        input = input - 'a' + 'A';
+                    }
+                    switch(input) {
+                        case 'W': // Rotate
+                            rotatePiece();
+                            break;
+                        case 'A': // Move left
+                            movePiece(0, -1);
+                            break;
+                        case 'D': // Move right
+                            movePiece(0, 1);
+                            break;
+                        case 'S': // Move down (soft drop)
+                            if (!movePiece(1, 0)) {
+                                // If can't move down, piece has landed, lock and refresh new piece
+                                lockCurrentAndSpawn();
+                            }
+                            break;
+                        case 'Q': // Quit game
+                            gameOver = true;
+                            break;
+                    }
+                }
+            }
+            // Handle automatic piece dropping (time-based)
+            chrono::steady_clock::time_point now = chrono::steady_clock::now();
+            long elapsed = chrono::duration_cast<chrono::milliseconds>(now - lastDropTime).count();
+            if (elapsed >= dropInterval) {
+                // Time reached drop interval
+                if (!movePiece(1, 0)) {
+                    // Can't move down, meaning bottom reached or obstacle hit, lock current piece and spawn new piece
+                    lockCurrentAndSpawn();
+                }
+                lastDropTime = now;
+            }
+        }
+        // Draw current game state
+        draw();
+        // Short sleep to reduce CPU usage and control refresh rate
+        this_thread::sleep_for(chrono::milliseconds(20));
+    }
+    // Exit loop means game over
+
+    //Get bestscore
+    fout.open("score.txt",ios::app);
+    fout << score <<' ';
+    fout.close();
+    int num=0;
+    fin.open("score.txt");
+    while(fin>>num) {
+        if (num>=bestscore)
+            bestscore = num;
+    }
+    fin.close();
+    showGameOverScreen();
+
+
+    restoreTerminal(origTermios);
+}
