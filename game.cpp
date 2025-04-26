@@ -687,129 +687,129 @@ void TetrisGame::run() {
 
     restoreTerminal(origTermios);
 }
-        
-        /** Display a beautiful game over screen with final score and restart option */
-        void TetrisGame::showGameOverScreen() {
-            // Get terminal size
-            struct winsize w;
-            ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-            
-            
-            
-            // Fixed box dimensions
-            const int boxWidth = 66;
-            const int boxHeight = 12;
-            
-            // Function to draw the game over screen
-            auto drawGameOverScreen = [&]() {
-                // Get current terminal size
-                ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-                
-                // Calculate center position
-                int startRow = (w.ws_row - boxHeight) / 2;
-                int startCol = (w.ws_col - boxWidth) / 2;
-                
-                // Ensure position is valid
-                startRow = max(1, startRow);
-                startCol = max(1, startCol);
-                
-                // Clear screen
-                cout << "\033[H\033[J";
-                
-                // Draw the game over screen
-                cout << "\033[" << startRow << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "╔════════════════════════════════════════════════════════════════╗\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+1) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "║\033[0m" << titleColor << "                  GAME OVER!\033[0m\033[1m" << borderColor <<"\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+2) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "╠════════════════════════════════════════════════════════════════╣\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+3) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "║\033[0m" << scoreColor << "                  Final Score: " << score <<"\033[0m\033[1m" << borderColor <<  "\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
 
-                cout << "\033[" << (startRow+4) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "║\033[0m" << scoreColor << "                  Record: "<<bestscore<<"\033[0m\033[1m" << borderColor <<  "\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+5) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "║\033[0m" << difficultyColor << "                  Difficulty: ";
-                switch(difficulty) {
-                    case EASY: cout << "Easy"; break;
-                    case MEDIUM: cout << "Medium"; break;
-                    case HARD: cout << "Hard"; break;
-                    case EXPERT: cout << "Expert"; break;
-                }
-                cout << "\033[0m\033[1m" << borderColor  <<"\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+6) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "╠════════════════════════════════════════════════════════════════╣\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+7) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "║\033[0m" << instructionColor << "              Press SPACE to play again or Q to quit \033[0m\033[1m" << borderColor  <<"\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
-                
-                cout << "\033[" << (startRow+8) << ";" << startCol << "H";
-                cout << "\033[1m" << borderColor << "╚════════════════════════════════════════════════════════════════╝\033[0m" << endl;
-                
-                cout.flush();
-            };
-            
-            // Initial draw
+// Display a beautiful game over screen with final score and restart option 
+void TetrisGame::showGameOverScreen() {
+    // Get terminal size
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    
+    
+    
+    // Fixed box dimensions
+    const int boxWidth = 66;
+    const int boxHeight = 12;
+    
+    // Function to draw the game over screen
+    auto drawGameOverScreen = [&]() {
+        // Get current terminal size
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        
+        // Calculate center position
+        int startRow = (w.ws_row - boxHeight) / 2;
+        int startCol = (w.ws_col - boxWidth) / 2;
+        
+        // Ensure position is valid
+        startRow = max(1, startRow);
+        startCol = max(1, startCol);
+        
+        // Clear screen
+        cout << "\033[H\033[J";
+        
+        // Draw the game over screen
+        cout << "\033[" << startRow << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "╔════════════════════════════════════════════════════════════════╗\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+1) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "║\033[0m" << titleColor << "                  GAME OVER!\033[0m\033[1m" << borderColor <<"\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+2) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "╠════════════════════════════════════════════════════════════════╣\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+3) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "║\033[0m" << scoreColor << "                  Final Score: " << score <<"\033[0m\033[1m" << borderColor <<  "\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
+
+        cout << "\033[" << (startRow+4) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "║\033[0m" << scoreColor << "                  Record: "<<bestscore<<"\033[0m\033[1m" << borderColor <<  "\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+5) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "║\033[0m" << difficultyColor << "                  Difficulty: ";
+        switch(difficulty) {
+            case EASY: cout << "Easy"; break;
+            case MEDIUM: cout << "Medium"; break;
+            case HARD: cout << "Hard"; break;
+            case EXPERT: cout << "Expert"; break;
+        }
+        cout << "\033[0m\033[1m" << borderColor  <<"\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+6) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "╠════════════════════════════════════════════════════════════════╣\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+7) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "║\033[0m" << instructionColor << "              Press SPACE to play again or Q to quit \033[0m\033[1m" << borderColor  <<"\033["<<startCol+boxWidth-1<<"G"<< "║\033[0m" << endl;
+        
+        cout << "\033[" << (startRow+8) << ";" << startCol << "H";
+        cout << "\033[1m" << borderColor << "╚════════════════════════════════════════════════════════════════╝\033[0m" << endl;
+        
+        cout.flush();
+    };
+    
+    // Initial draw
+    drawGameOverScreen();
+    
+    // Store last terminal size
+    struct winsize lastW = w;
+    
+    // Main loop for game over screen
+    while (true) {
+        // Check for terminal size changes
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        if (w.ws_row != lastW.ws_row || w.ws_col != lastW.ws_col) {
+            lastW = w;
             drawGameOverScreen();
-            
-            // Store last terminal size
-            struct winsize lastW = w;
-            
-            // Main loop for game over screen
-            while (true) {
-                // Check for terminal size changes
-                ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-                if (w.ws_row != lastW.ws_row || w.ws_col != lastW.ws_col) {
-                    lastW = w;
-                    drawGameOverScreen();
-                }
-                
-                // Check for user input
-                char ch;
-                if (read(STDIN_FILENO, &ch, 1) > 0) {
-                    if (ch == ' ') {
-                        // Reset game state and restart
-                        resetGame();
-                        run();
-                        return;
-                    } else if (ch == 'q' || ch == 'Q') {
-                        // Quit game
-                        return;
-                    }
-                }
-                
-                // Short sleep to reduce CPU usage
-                this_thread::sleep_for(chrono::milliseconds(50));
+        }
+        
+        // Check for user input
+        char ch;
+        if (read(STDIN_FILENO, &ch, 1) > 0) {
+            if (ch == ' ') {
+                // Reset game state and restart
+                resetGame();
+                run();
+                return;
+            } else if (ch == 'q' || ch == 'Q') {
+                // Quit game
+                return;
             }
         }
         
-        /** Reset game state for a new game */
-        void TetrisGame::resetGame() {
-            // Reset board
-            board = vector<vector<char>>(height, vector<char>(width, ' '));
-            
-            // Reset game variables
-            currentType = I;
-            nextType = I;
-            currentRotation = 0;
-            nextRotation = 0;
-            currentRow = 0;
-            currentCol = 0;
-            score = 0;
-            gameOver = false;
-            isClearingAnimation = false;
-            animationFrame = 0;
-            linesToClear.clear();
-        }
-    
+        // Short sleep to reduce CPU usage
+        this_thread::sleep_for(chrono::milliseconds(50));
+    }
+}
 
-        void TetrisGame::lockCurrentAndSpawn() {
-            lockPiece();      // Lock the current block to the game board
-            clearLines();     // Clear any complete lines and update score
-            spawnPiece();     // Generate a new block
-        }
+// Reset game state for a new game 
+void TetrisGame::resetGame() {
+    // Reset board
+    board = vector<vector<char>>(height, vector<char>(width, ' '));
+    
+    // Reset game variables
+    currentType = I;
+    nextType = I;
+    currentRotation = 0;
+    nextRotation = 0;
+    currentRow = 0;
+    currentCol = 0;
+    score = 0;
+    gameOver = false;
+    isClearingAnimation = false;
+    animationFrame = 0;
+    linesToClear.clear();
+}
+
+
+void TetrisGame::lockCurrentAndSpawn() {
+    lockPiece();      // Lock the current block to the game board
+    clearLines();     // Clear any complete lines and update score
+    spawnPiece();     // Generate a new block
+}
