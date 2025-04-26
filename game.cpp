@@ -262,3 +262,298 @@ bool TetrisGame::movePiece(int dr, int dc) {
     }
     return false;
 }
+
+// Try to rotate the current block (90 degrees clockwise), returns true if successful, false if failed. 
+bool TetrisGame::rotatePiece() {
+    int newRotation = (currentRotation + 1) % 4; // Calculate index of rotation state after rotation
+    // Try to apply rotated shape at the same position, check for conflicts
+    if (!checkCollision(currentType, newRotation, currentRow, currentCol)) {
+        currentRotation = newRotation;
+        return true;
+    }
+    return false; // Rotation would conflict, so don't rotate
+}
+
+// Lock the current block to the game board (called when it cannot fall further) 
+void TetrisGame::lockPiece() {
+    for (size_t i = 0; i < TetrominoShapes[currentType][currentRotation].size(); ++i) {
+        const Point &p = TetrominoShapes[currentType][currentRotation][i];
+        int r = currentRow + p.r;
+        int c = currentCol + p.c;
+        // Use block type first letter to fill grid
+        char fillChar;
+        switch(currentType) {
+            case I: fillChar = 'I'; break;
+            case J: fillChar = 'J'; break;
+            case L: fillChar = 'L'; break;
+            case O: fillChar = 'O'; break;
+            case S: fillChar = 'S'; break;
+            case T: fillChar = 'T'; break;
+            case Z: fillChar = 'Z'; break;
+        }
+        if (r >= 0 && r < height && c >= 0 && c < width) {
+            board[r][c] = fillChar;
+        }
+    }
+}
+
+void TetrisGame::clearLines() {
+    linesToClear.clear();
+    // detect lines that need to be cleared
+    for (int r = height - 1; r >= 0; --r) {
+        bool full = true;
+        for (int c = 0; c < width; ++c) {
+            if (board[r][c] == ' ') {
+                full = false;
+                break;
+            }
+        }
+        if (full) {
+            linesToClear.push_back(r);
+        }
+    }
+
+    // If there are lines to clear, start the animation
+    if (!linesToClear.empty()) {
+        isClearingAnimation = true;
+        animationFrame = 0;
+        playClearAnimation(); // Play animation (blocking)
+        performLineClear();   // Actually perform the clearing
+    }
+}
+
+void TetrisGame::playClearAnimation() {
+    for (int i = 0; i < TOTAL_ANIMATION_FRAMES; ++i) {
+        animationFrame = i;
+        draw(); // Redraw interface
+        
+        this_thread::sleep_for(chrono::milliseconds(100));
+    }
+}
+
+
+//Clear filled lines and update score 
+void TetrisGame::performLineClear() {
+    int linesCleared = 0;
+    // Check each row from bottom to top
+    for (int r = height - 1; r >= 0; --r) {
+        bool full = true;
+        for (int c = 0; c < width; ++c) {
+            if (board[r][c] == ' ') {
+                full = false;
+                break;
+            }
+        }
+        if (full) {
+            // Clear this row, move all rows above down
+            for (int rr = r; rr > 0; --rr) {
+                board[rr] = board[rr - 1]; // Cover current row with the row above
+            }
+            // Set the top row to empty
+            board[0] = vector<char>(width, ' ');
+            // Since the current row was cleared, r needs to check the same row again (filled with content from above)
+            ++linesCleared;
+            ++r; // Adjust index to recheck this row
+        }
+    }
+    // Increase score based on number of lines cleared and difficulty
+    if (linesCleared > 0) {
+        int baseScore;
+        switch(linesCleared) {
+            case 1: baseScore = 100; break;
+            case 2: baseScore = 300; break;
+            case 3: baseScore = 500; break;
+            case 4: baseScore = 800; break;
+            default: baseScore = 1000; break; // Theoretically maximum 4 lines at once
+        }
+        
+        // Adjust score based on difficulty
+        switch(difficulty) {
+            case EASY:
+                score += baseScore; // Base score
+                break;
+            case MEDIUM:
+                score += baseScore * 1.2; // 20% bonus
+                break;
+            case HARD:
+                score += baseScore * 1.5; // 50% bonus
+                break;
+            case EXPERT:
+                score += baseScore * 2.0; // 100% bonus
+                break;
+        }
+    }
+    isClearingAnimation = false;
+}
+
+
+// Draw current game state to console 
+void TetrisGame::draw() {
+    // Get terminal size
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    
+    // Use ANSI escape sequences to move cursor to center and clear screen
+    cout << "\033[H\033[J";
+    
+    
+    
+    // Calculate center position for the game board
+    int boardStartRow = (w.ws_row - height - 4) / 2;
+    int boardStartCol = (w.ws_col - width - 4) / 2;
+    
+    // Ensure position is valid
+    boardStartRow = max(1, boardStartRow);
+    boardStartCol = max(1, boardStartCol);
+    
+    // Draw title
+    string title = "TETRIS";
+    cout << "\033[" << boardStartRow << ";" << (w.ws_col - title.length()) / 2 << "H";
+    cout << titleColor << "\033[1m" << title << "\033[0m" << endl;
+    
+    // Draw score 
+    int scoreBoxWidth = 30;
+    int scoreBoxStartCol = (w.ws_col - scoreBoxWidth) / 2;
+    
+    // Draw score box 
+    cout << "\033[" << (boardStartRow + 1) << ";" << scoreBoxStartCol << "H";
+    cout << borderColor << "╔══════════════════════════════╗" << endl;
+    
+    string scoreText = "Score: " + to_string(score);
+    
+    cout << "\033[" << (boardStartRow + 2) << ";" << scoreBoxStartCol << "H";
+    cout << borderColor << "║" <<"\033["<< (w.ws_col - scoreText.length()) / 2<< "G" <<scoreColor << scoreText << "\033[0m" << borderColor << "\033["<< scoreBoxStartCol+scoreBoxWidth+1<<"G"<<"║" << endl;
+    
+    cout << "\033[" << (boardStartRow + 3) << ";" << scoreBoxStartCol << "H";
+    cout << borderColor << "╚══════════════════════════════╝" << endl;
+    
+    // Draw game board
+    cout << "\033[" << (boardStartRow + 5) << ";" << boardStartCol << "H";
+    cout << borderColor << "╔";
+    for (int c = 0; c < width; ++c) cout << "═";
+    cout << "╗" << endl;
+    
+    // Draw each row 
+    for (int r = 0; r < height; ++r) {
+        cout << "\033[" << (boardStartRow + 6 + r) << ";" << boardStartCol << "H";
+        cout << borderColor << "║";
+        
+        for (int c = 0; c < width; ++c) {
+            bool isAnimatingLine = find(linesToClear.begin(), 
+                                    linesToClear.end(), r) 
+                                    != linesToClear.end();
+        
+            if (isAnimatingLine && isClearingAnimation) {
+                // Enhanced animation effects
+                if (animationFrame % 2 == 0) {
+                    cout << "\033[48;5;226m\033[38;5;232m"; // Yellow background black text
+                    cout << "✦";
+                } else {
+                    cout << "\033[48;5;208m\033[38;5;255m"; // Orange background white text
+                    cout << "★";
+                }
+                cout << RESET;
+                continue;
+            }
+            
+            char ch = board[r][c];
+            bool isActiveBlock = false;
+            
+            // Check if current active block occupies this cell
+            for (size_t i = 0; i < TetrominoShapes[currentType][currentRotation].size(); ++i) {
+                const Point &p = TetrominoShapes[currentType][currentRotation][i];
+                if (r == currentRow + p.r && c == currentCol + p.c) {
+                    isActiveBlock = true;
+                    break;
+                }
+            }
+            
+            if (isActiveBlock) {
+                // Display active block
+                switch(currentType) {
+                    case I: cout << ACTIVE_COLOR['I'] << "█" << RESET; break;
+                    case J: cout << ACTIVE_COLOR['J'] << "█" << RESET; break;
+                    case L: cout << ACTIVE_COLOR['L'] << "█" << RESET; break;
+                    case O: cout << ACTIVE_COLOR['O'] << "█" << RESET; break;
+                    case S: cout << ACTIVE_COLOR['S'] << "█" << RESET; break;
+                    case T: cout << ACTIVE_COLOR['T'] << "█" << RESET; break;
+                    case Z: cout << ACTIVE_COLOR['Z'] << "█" << RESET; break;
+                }
+            } else {
+                // Display fixed block or empty space
+                if (ch == ' ') {
+                    cout << ' ';
+                } else {
+                    cout << COLOR[ch] << "█" << RESET;
+                }
+            }
+        }
+        
+        cout << borderColor << "║" << endl;
+    }
+    
+    // Draw bottom border
+    cout << "\033[" << (boardStartRow + 6 + height) << ";" << boardStartCol << "H";
+    cout << borderColor << "╚";
+    for (int c = 0; c < width; ++c) cout << "═";
+    cout << "╝" << endl;
+    
+    string controlText = "Controls: W/↑ Rotate | A/← Left | D/→ Right | S/↓ Drop | Q Quit";
+    cout << "\033[" << (boardStartRow + 8 + height) << ";" << (w.ws_col - controlText.length()) / 2 << "H";
+    cout << controlColor << "Controls: W/↑ Rotate | A/← Left | D/→ Right | S/↓ Drop | Q Quit" << endl;
+    
+    
+    // Draw next piece preview 
+    if (w.ws_col >= boardStartCol + width + 15) {
+        // Position the next piece box to the right of the game board
+        int nextBoxStartCol = boardStartCol + width + 4;
+        
+        // Draw the next piece box with proper borders
+        cout << "\033[" << (boardStartRow + 5) << ";" << nextBoxStartCol << "H";
+        cout << borderColor << "╔═══════════╗" << endl;
+        
+        // Draw the next piece label
+        cout << "\033[" << (boardStartRow + 6) << ";" << nextBoxStartCol << "H";
+        cout << borderColor << "║" << nextPieceColor << "   Next:   " << RESET << borderColor << "║" << endl;
+        
+        // Create a 4x4 grid for the preview
+        vector<vector<bool>> previewGrid(4, vector<bool>(4, false));
+        
+        // Mark the positions of the next piece in the preview grid
+        for (const Point& p : TetrominoShapes[nextType][nextRotation]) {
+            if (p.r >= 0 && p.r < 4 && p.c >= 0 && p.c < 4) {
+                previewGrid[p.r][p.c] = true;
+            }
+        }
+        
+        // Draw the preview grid
+        for (int r = 0; r < 4; ++r) {
+            cout << "\033[" << (boardStartRow + 7 + r) << ";" << nextBoxStartCol << "H";
+            cout << borderColor << "║    ";
+            
+            for (int c = 0; c < 4; ++c) {
+                if (previewGrid[r][c]) {
+                    switch(nextType) {
+                        case I: cout << ACTIVE_COLOR['I'] << "█" << RESET; break;
+                        case J: cout << ACTIVE_COLOR['J'] << "█" << RESET; break;
+                        case L: cout << ACTIVE_COLOR['L'] << "█" << RESET; break;
+                        case O: cout << ACTIVE_COLOR['O'] << "█" << RESET; break;
+                        case S: cout << ACTIVE_COLOR['S'] << "█" << RESET; break;
+                        case T: cout << ACTIVE_COLOR['T'] << "█" << RESET; break;
+                        case Z: cout << ACTIVE_COLOR['Z'] << "█" << RESET; break;
+                    }
+                } else {
+                    cout << " ";
+                }
+            }
+            
+            cout << "   " << borderColor << "║" << endl;
+        }
+        
+        // Draw the bottom border of the next piece box
+        cout << "\033[" << (boardStartRow + 11) << ";" << nextBoxStartCol << "H";
+        cout << borderColor << "╚═══════════╝" << endl;
+    }
+    
+    cout.flush();
+}
