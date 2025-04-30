@@ -10,6 +10,12 @@ HKU ENGG1340/COMP2113 group15
 
 ---
 
+# Demostration vedio
+
+https://drive.google.com/file/d/1dnBG6YIjB2s2BbR2pQtjFBbGZe4XCFXu/view?usp=share_link
+
+---
+
 # Description of Tetris
 
 Tetris is an iconic puzzle game that has captivated players since its creation in 1984. The objective is simple yet endlessly engaging: arrange falling geometric shapes, known as Tetriminos, to form complete horizontal lines on a grid. As each Tetrimino descends, players must rotate and position them strategically to fit together without gaps. When a line is completed, it clears, making room for more blocks. As the game progresses, the Tetriminos fall faster, demanding quick reflexes and sharp spatial thinking. With its minimalist design, addictive gameplay, and increasing difficulty, Tetris offers a timeless challenge that tests both skill and strategy, appealing to casual players and competitive high-scorers alike.
